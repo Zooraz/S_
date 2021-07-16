@@ -1,0 +1,81 @@
+{
+	console.log('frame listener ready')
+	
+	
+	// If loaded not in the top of browser
+	var isFramed = false;
+	try {
+  	    isFramed = window != window.top || document != top.document || self.location != top.location;
+	} catch (e) {
+		isFramed = true;
+	}
+	if (!isFramed) window.location = 'https://s-art.pro';
+	
+	
+	
+	
+	function listener(event) {
+	    var win = window.parent.frames.frame1;
+
+		if (event.origin !== 'https://s-art.pro') {
+			// что-то прислали с неизвестного домена - проигнорируем..
+			return;
+		}
+		const data = event.data
+
+		fetch( 'https://blog.s-art.pro/wp-json/insert_post/v1/posts/add', {
+    		method: 'POST',
+    		headers: { 'Content-Type': 'application/json' },
+    		body: data
+	    })
+		.then((res) => res.json())
+		.then((data) => {
+			let restult = {
+				title: 'Error',
+				description: 'Request not process'
+			}
+			if ( data === 200) {
+				result = {
+					title: 'Complete',
+					description: 'Your post is publish!'
+				}
+				window.location.reload(); // Обновляем страницу чтобы сработало обновление Тегов и Шаблонов
+			}
+			if ( data === 400 ) {
+				result = {
+					title: 'Error',
+					description: 'Data is not full!'
+				}
+			}
+			if ( data === 403 ) {
+				result = {
+					title: 'Error',
+					description: 'Only register user can post!'
+				}
+			}
+  
+			win.postMessage(JSON.stringify(result), "https://s-art.pro/Sart_test/Sart_center.html");
+		})
+		.catch((err) => {
+			console.log(err)
+			let result = {
+				title: 'Error',
+				description: 'Error on server, try letter!'
+			}
+  
+			win.postMessage(JSON.stringify(result), "https://s-art.pro/Sart_test/Sart_center.html");
+  
+		});
+		
+	}
+
+	if (window.addEventListener) {
+		window.addEventListener("message", listener);
+	} else {
+		// IE8
+		window.attachEvent("onmessage", listener);
+	}
+	
+
+	
+}
